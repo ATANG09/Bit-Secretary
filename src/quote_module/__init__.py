@@ -1,0 +1,1 @@
+from quote_module.quote_module import PromptWritingModule

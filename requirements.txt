@@ -1,0 +1,16 @@
+flask
+flask_cors
+pymongo
+python-docx
+transformers
+LAC
+scipy
+numpy
+scikit-learn
+pytorch
+PyJWT
+matplotlib
+wordcloud
+pygtrans
+imageio
+cn2an
