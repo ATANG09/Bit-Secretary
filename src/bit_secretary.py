@@ -125,18 +125,20 @@ def reading():
     return result, 200, HEADER_CONFIG
 
 
-# 获取敏感词词典列表
-@app.route('/show_sensitive_dict', methods=['GET', 'POST'])
-def show_sensitive_dict():
-    result = json.dumps(user_dict_db.show_userdict(dict_type='sensitive'))
+# 获取词典列表
+@app.route('/show_user_dict', methods=['GET', 'POST'])
+def show_user_dict():
+    dict_type = request.form.get('dict_type')
+    result = json.dumps(user_dict_db.show_userdict(dict_type))
     return result, 200, HEADER_CONFIG
 
 
-# 添加敏感词词典
-@app.route('/add_sensitive_dict', methods=['GET', 'POST'])
-def add_sensitive_dict():
+# 添加词典
+@app.route('/add_user_dict', methods=['GET', 'POST'])
+def add_user_dict():
     name = request.form.get('name')
     lang_type = request.form.get('lang_type')
+    dict_type = request.form.get('dict_type')
     files = request.files.getlist('files')
     paths = []
     for file in files:
@@ -146,69 +148,27 @@ def add_sensitive_dict():
         paths.append(filepath)
 
     message = user_dict_db.add_userdict(
-        name, lang_type, paths, dict_type='sensitive')
+        name, lang_type, paths, dict_type)
     result = json.dumps({'message': message})
     return result, 200, HEADER_CONFIG
 
 
-# 删除敏感词词典
-@app.route('/delete_sensitive_dict', methods=['GET', 'POST'])
-def delete_sensitive_dict():
+# 删除词典
+@app.route('/delete_user_dict', methods=['GET', 'POST'])
+def delete_user_dict():
     name = request.form.get('name')
-    message = user_dict_db.delete_userdict(name, dict_type='sensitive')
+    dict_type = request.form.get('dict_type')
+    message = user_dict_db.delete_userdict(name, dict_type)
     result = json.dumps({'message': message})
     return result, 200, HEADER_CONFIG
 
 
-# 用户选择使用的敏感词词典
-@app.route('/select_sensitive_dict', methods=['GET', 'POST'])
-def select_sensitive_dict():
+# 用户选择使用的词典
+@app.route('/select_user_dict', methods=['GET', 'POST'])
+def select_user_dict():
     data = json.loads(request.form.get('data'))
-    message = user_dict_db.select_userdict(data, dict_type='sensitive')
-    result = json.dumps({'message': message})
-    return result, 200, HEADER_CONFIG
-
-
-# 获取实体词典列表
-@app.route('/show_entity_dict', methods=['GET', 'POST'])
-def show_entity_dict():
-    result = json.dumps(user_dict_db.show_userdict(dict_type='entity'))
-    return result, 200, HEADER_CONFIG
-
-
-# 添加实体词典
-@app.route('/add_entity_dict', methods=['GET', 'POST'])
-def add_entity_dict():
-    name = request.form.get('name')
-    lang_type = request.form.get('lang_type')
-    files = request.files.getlist('files')
-    paths = []
-    for file in files:
-        filename = file.filename
-        filepath = os.path.join(CACHE_DIR + 'user_dict/', filename)
-        file.save(filepath)
-        paths.append(filepath)
-
-    message = user_dict_db.add_userdict(
-        name, lang_type, paths, dict_type='entity')
-    result = json.dumps({'message': message})
-    return result, 200, HEADER_CONFIG
-
-
-# 删除实体词典
-@app.route('/delete_entity_dict', methods=['GET', 'POST'])
-def delete_entity_dict():
-    name = request.form.get('name')
-    message = user_dict_db.delete_userdict(name, dict_type='entity')
-    result = json.dumps({'message': message})
-    return result, 200, HEADER_CONFIG
-
-
-# 用户选择使用的实体词典
-@app.route('/select_entity_dict', methods=['GET', 'POST'])
-def select_entity_dict():
-    data = request.form.get('data')
-    message = user_dict_db.select_userdict(data, dict_type='entity')
+    dict_type = request.form.get('dict_type')
+    message = user_dict_db.select_userdict(data, dict_type)
     result = json.dumps({'message': message})
     return result, 200, HEADER_CONFIG
 
