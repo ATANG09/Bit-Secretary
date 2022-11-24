@@ -66,6 +66,7 @@ class SmartReading(object):
                 self.url, params=params, data=json.dumps(data), headers=self.headers)
             return json.loads(response.text)['result']
         except Exception as err:
+            log.ERROR("访问 {} 出错".format(self.url))
             log.ERROR(err)
 
     # 词性标注+新词发现
@@ -78,12 +79,16 @@ class SmartReading(object):
                 '机构名': [],
                 '时间': [],
                 '数词': [],
-            }
+            },
+           'new_words':[]
         }
 
         data = {'data_type': 'text', 'data_list': [
             text], 'param': {'POS': 'true'}}
         ictclas_res = self.make_request(data, 'ictclas')
+        if not ictclas_res:
+            return {'result':res}
+
         ictclas_res_list = ictclas_res[0].split()
         for item in ictclas_res_list:
             pos = item.rfind('/')
@@ -120,6 +125,9 @@ class SmartReading(object):
         data = {'data_type': 'text', 'data_list': [
             text], 'param': {'keys': 20}}
         new_words_res = self.make_request(data, method)
+        if not new_words_res:
+            return {'result':[]}
+
         res = [item['word'] for item in new_words_res[0]]
         return {'result': res}
 
@@ -127,6 +135,9 @@ class SmartReading(object):
     def sentiment_analysis(self, text, method):
         data = {'data_type': 'text', 'data_list': [text]}
         sentiment_res = self.make_request(data, method)
+        if not sentiment_res:
+            return {'result':''}
+
         img = draw(sentiment_res[0])
         return {'result': {'emotion_pic': image_to_str(img)}}
 
@@ -134,6 +145,9 @@ class SmartReading(object):
     def sentiment_for_wps(self, text):
         data = {'data_type':'text','data_list':[text]}
         sentiment_res = self.make_request(data, 'sentiment_analysis')
+        if not sentiment_res:
+            return {'result':[]}
+
         res = [{'name':SEN_MAP[k], 'value':v} for k, v in sentiment_res[0].items() if v != 0]
         return {'result':res}
 
@@ -150,6 +164,9 @@ class SmartReading(object):
         data = {'data_type': 'text', 'data_list': [
             text], 'param': {'keys': keys}}
         key_extract_res = self.make_request(data, method)
+        if not key_extract_res:
+            return {'result':[]}
+
         res = [item['word'] for item in key_extract_res[0]]
         return {'result': res}
 
@@ -157,16 +174,16 @@ class SmartReading(object):
     def key_scanner(self, text, method):
         data = {'data_type': 'text', 'data_list': [text]}
         key_scanner_res = self.make_request(data, method)
+        if not key_scanner_res:
+            return {'result':[]}
+
         if 'illegal' in key_scanner_res[0]:
             res = key_scanner_res[0]['illegal']['keys']
         else:
             res = []
-
         user_dict = self.user_dict_db._load_userdict(
             dict_type='sensitive')  # 用户敏感词词典
-        for word in user_dict:
-            if word in text:
-                res.append(word)
+        res.extend([w for w in user_dict if w in text])
         return {'result': res}
 
     # 摘要
@@ -174,6 +191,9 @@ class SmartReading(object):
         data = {'data_type': 'text', 'data_list': [
             text], 'param': {'max': 300, 'rate': 0.3}}
         summary_res = self.make_request(data, method)
+        if not summary_res:
+            return {'result':''}
+
         return {'result': summary_res[0]}
 
     # 语种识别
@@ -186,8 +206,8 @@ class SmartReading(object):
             res = self.ictclas(text)
         elif method == 'sentiment_analysis':
             res = self.sentiment_analysis(text, method)
-        # elif method == 'sentiment_for_wps':
-        #     res = self.sentiment_for_wps(text)
+        elif method == 'sentiment_for_wps':
+            res = self.sentiment_for_wps(text)
         elif method == 'key_extract':
             res = self.key_extract(text, method)
         elif method == 'key_scanner':
@@ -196,8 +216,8 @@ class SmartReading(object):
             res = self.new_words_finder(text, method)
         elif method == 'summary':
             res = self.summary(text, method)
-        # elif method == 'lang_detect':
-        #     res = self.lang_detect(text)
+        elif method == 'lang_detect':
+            res = self.lang_detect(text)
         return json.dumps(res)
 
 

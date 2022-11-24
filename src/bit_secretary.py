@@ -33,7 +33,7 @@ HEADER_CONFIG = [('Access-Control-Allow-Origin', '*')]
 """
 
 # 模板学习
-@app.route('/learn_template', methods=['GET', 'POST'])
+@app.route('/learn_template', methods=['POST'])
 def learn_template():
     name = request.form.get('template_name')
     doc_type = request.form.get('doc_type')
@@ -53,7 +53,7 @@ def learn_template():
 
 
 # 模板展示
-@app.route('/show_templates', methods=['GET', 'POST'])
+@app.route('/show_templates', methods=['GET'])
 def show_templates():
     templates = doc_template_db.show_templates()
     result = json.dumps(templates)
@@ -61,7 +61,7 @@ def show_templates():
 
 
 # 模板加载
-@app.route('/load_template', methods=['GET', 'POST'])
+@app.route('/load_template', methods=['POST'])
 def load_template():
     template_name = request.form.get('template_name')
     log.INFO('模板名称: {}'.format(template_name))
@@ -72,7 +72,7 @@ def load_template():
 
 
 # 模板删除
-@app.route('/delete_template', methods=['GET', 'POST'])
+@app.route('/delete_template', methods=['POST'])
 def delete_template():
     name = request.form.get('template_name')
     message = doc_template_db.delete_template(name)
@@ -81,7 +81,7 @@ def delete_template():
 
 
 # 模板清空
-@app.route('/clear_templates', methods=['GET', 'POST'])
+@app.route('/clear_templates', methods=['GET'])
 def clear_templates():
     message = doc_template_db.clear_templates()
     result = json.dumps({'message': message})
@@ -92,7 +92,7 @@ def clear_templates():
 """
 
 # 提示写作
-@app.route('/prompt_write', methods=['GET', 'POST'])
+@app.route('/prompt_write', methods=['POST'])
 def prompt_write():
     text = request.form.get('prompt_write_inputs')
     if len(text.strip()) == 0:
@@ -109,11 +109,11 @@ def prompt_write():
 """
 
 # 智能阅读
-@app.route('/reading', methods=['GET', 'POST'])
+@app.route('/reading', methods=['POST'])
 def reading():
     text = request.form.get('text')
     method = request.form.get('method')
-    if len(text.strip()) == 0:
+    if not text:
         log.ERROR('阅读文本为空')
         return "", 200, HEADER_CONFIG
 
@@ -126,7 +126,7 @@ def reading():
 
 
 # 获取词典列表
-@app.route('/show_user_dict', methods=['GET', 'POST'])
+@app.route('/show_user_dict', methods=['POST'])
 def show_user_dict():
     dict_type = request.form.get('dict_type')
     result = json.dumps(user_dict_db.show_userdict(dict_type))
@@ -134,7 +134,7 @@ def show_user_dict():
 
 
 # 添加词典
-@app.route('/add_user_dict', methods=['GET', 'POST'])
+@app.route('/add_user_dict', methods=['POST'])
 def add_user_dict():
     name = request.form.get('name')
     lang_type = request.form.get('lang_type')
@@ -154,7 +154,7 @@ def add_user_dict():
 
 
 # 删除词典
-@app.route('/delete_user_dict', methods=['GET', 'POST'])
+@app.route('/delete_user_dict', methods=['POST'])
 def delete_user_dict():
     name = request.form.get('name')
     dict_type = request.form.get('dict_type')
@@ -164,7 +164,7 @@ def delete_user_dict():
 
 
 # 用户选择使用的词典
-@app.route('/select_user_dict', methods=['GET', 'POST'])
+@app.route('/select_user_dict', methods=['POST'])
 def select_user_dict():
     data = json.loads(request.form.get('data'))
     dict_type = request.form.get('dict_type')
@@ -181,7 +181,7 @@ def select_user_dict():
 """
 
 # 情报分析与报告生成
-@app.route('/STI', methods=['GET', 'POST'])
+@app.route('/STI', methods=['POST'])
 def STI():
     upload_files = request.files.getlist('doc_files')
     doc_paths = []
@@ -194,6 +194,12 @@ def STI():
 
     sti.STI_manager(doc_paths)
     return send_file('../cache/STI/网络信息参考.docx'), 200, HEADER_CONFIG
+
+
+"""  ****************** 用户管理 ******************
+"""
+
+
 
 
 if __name__ == '__main__':

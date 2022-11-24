@@ -72,7 +72,6 @@ class DocTemplateDB(object):
     """
 
     def __init__(self):
-
         self.mdb = MongoDB(collection='doc_template')
 
     def save_template(self, name, template, user='user1'):
@@ -168,7 +167,6 @@ class UserDictDB(object):
     }
 
     def __init__(self):
-
         self.mdb = MongoDB(collection='user_dict')
 
     def add_userdict(self, name, lang_type, paths, dict_type='sensitive', user='user1'):
@@ -290,6 +288,15 @@ class UserDictDB(object):
         log.INFO('用户 {} {}词典集: {}'.format(
             user, UserDictDB.user_dict_type[dict_type], dicts))
         return {'data': dicts}
+
+
+class UserManageDB(object):
+    """ 用户管理 -
+    """
+
+    def __init__(self):
+        self.mdb = MongoDB(collection='user_manage')
+
 
 
 if __name__ == '__main__':

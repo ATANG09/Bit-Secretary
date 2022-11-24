@@ -348,6 +348,8 @@ class DocLearnModule(object):
         log.INFO('文档类型: {}'.format(doc_type))
         log.INFO('文档列表: {}'.format(json.dumps(doc_paths, ensure_ascii=False)))
         docs, doc_num = self._get_docs(doc_paths)
+        if doc_num == 0:
+            return ""
 
         merge_doc = self._merge_docs(self.ls.cut_paragraph(docs), doc_num)
         self._save_data(merge_doc, os.path.join(CACHE_DIR, 'merge_doc.json'))
