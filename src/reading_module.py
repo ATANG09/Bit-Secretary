@@ -70,7 +70,7 @@ class SmartReading(object):
             log.ERROR(err)
 
     # 词性标注+新词发现
-    def ictclas(self, text):
+    def ictclas(self, text, user):
         res = {
             'POS': {
                 '军事装备': [],
@@ -111,7 +111,7 @@ class SmartReading(object):
                 [e for e in EQUIPMENT[country] if e in text])
 
         user_dict = self.user_dict_db._load_userdict(
-            dict_type='entity')  # 用户实体词典
+            dict_type='entity', user=user)  # 用户实体词典
         for d in user_dict:
             res['POS'][d['name']] = [w for w in d['words'] if w in text]
 
@@ -171,7 +171,7 @@ class SmartReading(object):
         return {'result': res}
 
     # 敏感词过滤
-    def key_scanner(self, text, method):
+    def key_scanner(self, text, method, user):
         data = {'data_type': 'text', 'data_list': [text]}
         key_scanner_res = self.make_request(data, method)
         if not key_scanner_res:
@@ -182,7 +182,7 @@ class SmartReading(object):
         else:
             res = []
         user_dict = self.user_dict_db._load_userdict(
-            dict_type='sensitive')  # 用户敏感词词典
+            dict_type='sensitive', user=user)  # 用户敏感词词典
         res.extend([w for w in user_dict if w in text])
         return {'result': res}
 
@@ -201,9 +201,9 @@ class SmartReading(object):
         index = self.dect.detect_text(text)
         return {'result': self.dect.id_to_chinese(index)}
 
-    def smart_reading(self, text, method):
+    def smart_reading(self, text, method, user='_user'):
         if method == 'ictclas':
-            res = self.ictclas(text)
+            res = self.ictclas(text, user)
         elif method == 'sentiment_analysis':
             res = self.sentiment_analysis(text, method)
         elif method == 'sentiment_for_wps':
@@ -211,7 +211,7 @@ class SmartReading(object):
         elif method == 'key_extract':
             res = self.key_extract(text, method)
         elif method == 'key_scanner':
-            res = self.key_scanner(text, method)
+            res = self.key_scanner(text, method, user)
         elif method == 'new_words_finder':
             res = self.new_words_finder(text, method)
         elif method == 'summary':
