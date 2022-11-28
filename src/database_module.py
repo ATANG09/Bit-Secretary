@@ -7,6 +7,7 @@
 @Desc    :   数据库模块
 '''
 
+import datetime
 import re
 import time
 
@@ -75,6 +76,7 @@ class DocTemplateDB(object):
 
     def __init__(self):
         self.mdb = MongoDB(collection='doc_template')
+        self.log_db = LogDB()
 
     def _save_template(self, name, template, user='_user'):
 
@@ -86,7 +88,7 @@ class DocTemplateDB(object):
 
         if user == '_user':  # 游客无存储模板权限
             return
-        
+
         new_template = create_data()
         if self.mdb.is_exist({'user': user}):
             data = self.mdb.find({'user': user})[0]
@@ -96,14 +98,17 @@ class DocTemplateDB(object):
                     data['templates'].append(new_template)
                     self.mdb.update({'user': user}, data)
                     log.INFO("用户 {} 已更新文档模板: {}".format(user, name))
+                    self.log_db.store_log("更新文档模板: {}".format(name), user)
                     break
             else:
                 data['templates'].append(new_template)
                 self.mdb.update({'user': user}, data)
                 log.INFO("用户 {} 已添加文档模板: {}".format(user, name))
+                self.log_db.store_log("添加文档模板: {}".format(name), user)
         else:
             self.mdb.insert({'user': user, 'templates': [new_template]})
             log.INFO("用户 {} 已添加文档模板: {}".format(user, name))
+            self.log_db.store_log("添加文档模板: {}".format(name), user)
 
     def load_template(self, name, user='_user'):
         if not self.mdb.is_exist({'user': user}):
@@ -115,6 +120,7 @@ class DocTemplateDB(object):
             if t['name'] == name:
                 template = t['template']
                 log.INFO("已加载用户 {} 的文档模板: {}".format(user, name))
+                self.log_db.store_log("加载文档模板: {}".format(name), user)
                 return template
 
         log.ERROR("用户 {} 不存在文档模板: {}".format(user, name))
@@ -132,6 +138,7 @@ class DocTemplateDB(object):
                 data['templates'].remove(t)
                 self.mdb.update({'user': user}, data)
                 log.INFO("用户 {} 已删除文档模板: {}".format(user, name))
+                self.log_db.store_log("删除文档模板: {}".format(name), user)
                 return "OK"
 
         message = "用户 {} 不存在文档模板: {}".format(user, name)
@@ -148,6 +155,7 @@ class DocTemplateDB(object):
         data['templates'] = []
         self.mdb.update({'user': user}, data)
         log.INFO('用户 {} 已清空文档模板集'.format(user))
+        self.log_db.store_log("清空文档模板", user)
         return "OK"
 
     def show_templates(self, user='_user'):
@@ -159,7 +167,7 @@ class DocTemplateDB(object):
         templates = [{'name': t['name'], 'datetime':t['datetime']}
                      for t in data['templates']]
         log.INFO('用户 {} 文档模板集: {}'.format(user, templates))
-        result = {'templates':templates}
+        result = {'templates': templates}
         return result
 
 
@@ -174,6 +182,7 @@ class UserDictDB(object):
 
     def __init__(self):
         self.mdb = MongoDB(collection='user_dict')
+        self.log_db = LogDB()
 
     def add_userdict(self, name, lang_type, paths, dict_type='sensitive', user='_user'):
 
@@ -201,18 +210,24 @@ class UserDictDB(object):
                     self.mdb.update({'user': user}, data)
                     log.INFO("用户 {} 已更新{}词典: {}".format(
                         user, UserDictDB.user_dict_type[dict_type], name))
+                    self.log_db.store_log("更新{}词典: {}".format(
+                        UserDictDB.user_dict_type[dict_type], name), user)
                     break
             else:
                 data[dict_type].append(new_data)
                 self.mdb.update({'user': user}, data)
                 log.INFO("用户 {} 已添加{}词典: {}".format(
                     user, UserDictDB.user_dict_type[dict_type], name))
+                self.log_db.store_log("添加{}词典: {}".format(
+                    UserDictDB.user_dict_type[dict_type], name), user)
         else:
             new_user_data = {'user': user, 'sensitive': [], 'entity': []}
             new_user_data[dict_type].append(new_data)
             self.mdb.insert(new_user_data)
             log.INFO("用户 {} 已添加{}词典: {}".format(
                 user, UserDictDB.user_dict_type[dict_type], name))
+            self.log_db.store_log("添加{}词典: {}".format(
+                UserDictDB.user_dict_type[dict_type], name), user)
         return "OK"
 
     def select_userdict(self, config, dict_type='sensitive', user='_user'):
@@ -228,11 +243,15 @@ class UserDictDB(object):
                     d['checked'] = int(item['checked'])
                     self.mdb.update({'user': user}, data)
                     if d['checked'] == 1:
-                        log.INFO("用户 {} 已选中{}词典: {}".format(
+                        log.INFO("用户 {} 已选中使用{}词典: {}".format(
                             user, UserDictDB.user_dict_type[dict_type], item['name']))
+                        self.log_db.store_log("选中使用{}词典: {}".format(
+                            UserDictDB.user_dict_type[dict_type], item['name']), user)
                     else:
                         log.INFO("用户 {} 已取消使用{}词典: {}".format(
                             user, UserDictDB.user_dict_type[dict_type], item['name']))
+                        self.log_db.store_log("取消使用{}词典: {}".format(
+                            UserDictDB.user_dict_type[dict_type], item['name']), user)
                     break
             else:
                 log.ERROR("用户 {} 不存在{}词典: {}".format(
@@ -276,6 +295,8 @@ class UserDictDB(object):
                 self.mdb.update({'user': user}, data)
                 log.INFO("用户 {} 已删除{}词典: {}".format(
                     user, UserDictDB.user_dict_type[dict_type], name))
+                self.log_db.store_log("删除{}词典: {}".format(
+                    UserDictDB.user_dict_type[dict_type], name), user)
                 return "OK"
 
         message = "用户 {} 不存在{}词典: {}".format(
@@ -314,6 +335,7 @@ class UserManageDB(object):
 
     def __init__(self):
         self.mdb = MongoDB(collection='user_manage')
+        self.log_db = LogDB()
 
     def register(self, user, password):
         """ 注册 -
@@ -352,7 +374,9 @@ class UserManageDB(object):
         new_user = create_data()
         self.mdb.insert(new_user)
         log.INFO("已注册新用户: {}, 密码: {}".format(user, password))
+
         message = "注册成功"
+        self.log_db.store_log(message, user)
         return {'state': 0, 'message': message}
 
     def cancel(self, user):
@@ -364,6 +388,7 @@ class UserManageDB(object):
             return {'state': -1, 'message': message}
 
         self.mdb.delete({'user': user})
+        self.log_db.clear_logs(user)
         log.INFO("已注销用户 {}".format(user))
         message = "注销成功"
         return {'state': 0, 'message': message}
@@ -384,6 +409,7 @@ class UserManageDB(object):
             return {'state': -1, 'message': message}
 
         message = "登录成功"
+        self.log_db.store_log(message, user)
         return {'state': 0, 'message': message}
 
     def update_password(self, user, password):
@@ -401,6 +427,8 @@ class UserManageDB(object):
         user_data['password'] = password
         self.mdb.update({'user': user}, user_data)
         log.INFO("用户 {} 已修改密码: {}".format(user, password))
+
+        self.log_db.store_log("修改密码: {}".format(password), user)
         message = "修改成功"
         return {'state': 0, 'message': message}
 
@@ -435,6 +463,68 @@ class UserManageDB(object):
     #     log.INFO("已完成用户 {} 的权限配置".format(user))
     #     message = "修改用户权限成功"
     #     return {'state': 0, 'message': message}
+
+
+class LogDB(object):
+    """ 日志 -
+    """
+
+    def __init__(self):
+        self.mdb = MongoDB(collection='user_log')
+
+    def view_logs(self, keyword='', s_time='', e_time='', user='_user'):
+
+        def get_timestamp(date):
+            return datetime.datetime.strptime(date, "%Y-%m-%d %H:%M:%S").timestamp()
+
+        if user == '_user':
+            return []
+
+        if not self.mdb.is_exist({'user': user}):
+            log.INFO("查询日志失败，用户 {} 不存在".format(user))
+            return []
+
+        data = self.mdb.find({'user': user})[0]
+        logs = data['logs']
+        if keyword:
+            logs = [log for log in logs if keyword in log]
+        if s_time:
+            s_time = time.strptime(s_time, "%Y-%m-%d %H:%M:%S")
+            logs = [log for log in logs if time.strptime(
+                log.split('|')[0], "%Y-%m-%d %H:%M:%S") >= s_time]
+        if e_time:
+            e_time = time.strptime(e_time, "%Y-%m-%d %H:%M:%S")
+            logs = [log for log in logs if time.strptime(
+                log.split('|')[0], "%Y-%m-%d %H:%M:%S") < e_time]
+        logs = sorted(logs, key=lambda log: get_timestamp(
+            log.split('|')[0]), reverse=True)
+        return logs
+
+    def clear_logs(self, user='user'):
+        if user == '_user':
+            return
+
+        if self.mdb.is_exist({'user': user}):
+            self.mdb.delete({'user': user})
+
+    def store_log(self, log: str, user='user'):
+
+        def get_datetime():
+            return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
+        def create_data():
+            return "{}| {}".format(get_datetime(), log)
+
+        if user == '_user':
+            return
+
+        new_data = create_data()
+        if not self.mdb.is_exist({'user': user}):
+            self.mdb.insert({'user': user, 'logs': [new_data]})
+        else:
+            data = self.mdb.find({'user': user})[0]
+            data['logs'].append(new_data)
+            self.mdb.update({'user': user}, data)
 
 
 if __name__ == '__main__':

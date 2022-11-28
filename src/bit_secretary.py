@@ -13,7 +13,7 @@ import os
 from flask import Flask, request, send_file
 from flask_cors import CORS
 
-from database_module import UserManageDB, DocTemplateDB, UserDictDB
+from database_module import UserManageDB, DocTemplateDB, UserDictDB, LogDB
 from learn_module import DocLearnModule
 import log_module as log
 from quote_module import PromptWritingModule
@@ -45,8 +45,9 @@ def learn_template():
         filepath = os.path.join(CACHE_DIR + 'learn_template/', filename)
         file.save(filepath)
         doc_paths.append(filepath)
-
     log.INFO('模板名称: {}'.format(name))
+    log_db.store_log("执行模板学习功能。共上传{}份文档".format(len(doc_paths)), username)
+
     template = doc_learn.learn_docs(doc_type, doc_paths)
     doc_template_db._save_template(name, template, username)
     result = json.dumps(template)
@@ -100,11 +101,13 @@ def clear_templates():
 @app.route('/prompt_write', methods=['POST'])
 def prompt_write():
     text = request.form.get('prompt_write_inputs')
+    username = request.form.get('username')
     if len(text.strip()) == 0:
         log.ERROR('提示写作输入为空')
         return "", 200, HEADER_CONFIG
-
     log.INFO("提示写作输入: {}".format(text))
+    log_db.store_log("执行提示写作功能。提示文本: {}......".format(text[:50]), username)
+
     result = prompt_writing.prompt_writing(text)
     log.INFO("提示写作结果: {}".format(result))
     return result, 200, HEADER_CONFIG
@@ -122,9 +125,10 @@ def reading():
     if not text:
         log.ERROR('阅读文本为空')
         return "", 200, HEADER_CONFIG
-
     log.INFO("阅读文本: {}".format(text))
     log.INFO("阅读功能: {}".format(method))
+    log_db.store_log("执行智能阅读功能。阅读文本: {}".format(text[:50]), username)
+
     result = smart_reading.smart_reading(text, method, username)
     if method != 'sentiment_analysis':
         log.INFO("智能阅读结果: {}".format(result))
@@ -194,6 +198,7 @@ def select_user_dict():
 @app.route('/STI', methods=['POST'])
 def STI():
     upload_files = request.files.getlist('doc_files')
+    username = request.form.get('username')
     doc_paths = []
     for file in upload_files:
         filename = file.filename
@@ -201,6 +206,7 @@ def STI():
         file.save(filepath)
         doc_paths.append(filepath)
     log.INFO('情报文档列表: {}'.format(doc_paths))
+    log_db.store_log("执行科技情报功能。共上传{}份文档".format(len(doc_paths)), username)
 
     sti.STI_manager(doc_paths)
     return send_file('../cache/STI/网络信息参考.docx'), 200, HEADER_CONFIG
@@ -261,22 +267,38 @@ def update_password():
 #     return result, 200, HEADER_CONFIG
 
 
+"""  ****************** 日志 ******************
+"""
+
+# 查看用户日志
+@app.route('/view_logs', methods=['POST'])
+def view_logs():
+    username = request.form.get('username')
+    s_time = request.form.get('s_time')
+    e_time = request.form.get('e_time')
+    keyword = request.form.get('keyword')
+    logs = log_db.view_logs(keyword, s_time, e_time, username)
+    result = json.dumps({'logs': logs})
+    return result, 200, HEADER_CONFIG
+
+
 if __name__ == '__main__':
     user_db = UserManageDB()
     user_db.register('_user', '123456') # 注册游客
-    log.INFO(' 用户管理数据库模块加载完成 '.center(20, '*'))
+    log.INFO(' 用户管理模块加载完成 '.center(20, '*'))
     doc_learn = DocLearnModule()
+    doc_template_db = DocTemplateDB()
     log.INFO(' 模板学习模块加载完成 '.center(20, '*'))
     prompt_writing = PromptWritingModule()
     log.INFO(' 提示写作模块加载完成 '.center(20, '*'))
-    doc_template_db = DocTemplateDB()
-    log.INFO(' 文档模板数据库模块加载完成 '.center(20, '*'))
-    user_dict_db = UserDictDB()
-    log.INFO(' 用户词典数据库模块加载完成 '.center(20, '*'))
     smart_reading = SmartReading()
     log.INFO(' 智能阅读模块加载完成 '.center(20, '*'))
+    user_dict_db = UserDictDB()
+    log.INFO(' 用户词典模块加载完成 '.center(20, '*'))
     sti = STIModule()
     log.INFO(' 科技情报模块加载完成 '.center(20, '*'))
+    log_db = LogDB()
+    log.INFO(' 日志模块加载完成 '.center(20, '*'))
 
     log.INFO(' 比特秘书启动 '.center(30, '*'))
     app.run(host='0.0.0.0', port=5002, debug=False)

@@ -19,11 +19,14 @@ LOGGER = logging.getLogger(__name__)
 def INFO(msg):
     LOGGER.info(msg)
 
+
 def DEBUG(msg):
     LOGGER.debug(msg)
 
+
 def WARNING(msg):
     LOGGER.warning(msg)
+
 
 def ERROR(msg):
     LOGGER.error(msg)

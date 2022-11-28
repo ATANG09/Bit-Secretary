@@ -80,14 +80,14 @@ class SmartReading(object):
                 '时间': [],
                 '数词': [],
             },
-           'new_words':[]
+            'new_words': []
         }
 
         data = {'data_type': 'text', 'data_list': [
             text], 'param': {'POS': 'true'}}
         ictclas_res = self.make_request(data, 'ictclas')
         if not ictclas_res:
-            return {'result':res}
+            return {'result': res}
 
         ictclas_res_list = ictclas_res[0].split()
         for item in ictclas_res_list:
@@ -126,7 +126,7 @@ class SmartReading(object):
             text], 'param': {'keys': 20}}
         new_words_res = self.make_request(data, method)
         if not new_words_res:
-            return {'result':[]}
+            return {'result': []}
 
         res = [item['word'] for item in new_words_res[0]]
         return {'result': res}
@@ -136,20 +136,21 @@ class SmartReading(object):
         data = {'data_type': 'text', 'data_list': [text]}
         sentiment_res = self.make_request(data, method)
         if not sentiment_res:
-            return {'result':''}
+            return {'result': ''}
 
         img = draw(sentiment_res[0])
         return {'result': {'emotion_pic': image_to_str(img)}}
 
     # 情感分析(WPS)
     def sentiment_for_wps(self, text):
-        data = {'data_type':'text','data_list':[text]}
+        data = {'data_type': 'text', 'data_list': [text]}
         sentiment_res = self.make_request(data, 'sentiment_analysis')
         if not sentiment_res:
-            return {'result':[]}
+            return {'result': []}
 
-        res = [{'name':SEN_MAP[k], 'value':v} for k, v in sentiment_res[0].items() if v != 0]
-        return {'result':res}
+        res = [{'name': SEN_MAP[k], 'value':v}
+               for k, v in sentiment_res[0].items() if v != 0]
+        return {'result': res}
 
     # 关键词抽取
     def key_extract(self, text, method):
@@ -165,7 +166,7 @@ class SmartReading(object):
             text], 'param': {'keys': keys}}
         key_extract_res = self.make_request(data, method)
         if not key_extract_res:
-            return {'result':[]}
+            return {'result': []}
 
         res = [item['word'] for item in key_extract_res[0]]
         return {'result': res}
@@ -175,7 +176,7 @@ class SmartReading(object):
         data = {'data_type': 'text', 'data_list': [text]}
         key_scanner_res = self.make_request(data, method)
         if not key_scanner_res:
-            return {'result':[]}
+            return {'result': []}
 
         if 'illegal' in key_scanner_res[0]:
             res = key_scanner_res[0]['illegal']['keys']
@@ -192,7 +193,7 @@ class SmartReading(object):
             text], 'param': {'max': 300, 'rate': 0.3}}
         summary_res = self.make_request(data, method)
         if not summary_res:
-            return {'result':''}
+            return {'result': ''}
 
         return {'result': summary_res[0]}
 
