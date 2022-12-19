@@ -177,7 +177,8 @@ class UserDictDB(object):
 
     user_dict_type = {
         "sensitive": "敏感词",
-        "entity": "实体"
+        "entity": "实体",
+        "desensity": "脱敏",
     }
 
     def __init__(self):
@@ -221,7 +222,7 @@ class UserDictDB(object):
                 self.log_db.store_log("添加{}词典: {}".format(
                     UserDictDB.user_dict_type[dict_type], name), user)
         else:
-            new_user_data = {'user': user, 'sensitive': [], 'entity': []}
+            new_user_data = {'user': user, 'sensitive': [], 'entity': [], 'desensity': []}
             new_user_data[dict_type].append(new_data)
             self.mdb.insert(new_user_data)
             log.INFO("用户 {} 已添加{}词典: {}".format(
@@ -268,7 +269,7 @@ class UserDictDB(object):
 
         user_dict = []
         data = self.mdb.find({'user': user})[0]
-        if dict_type == 'sensitive':
+        if dict_type == 'sensitive' or dict_type == 'desensity':
             for d in data[dict_type]:
                 if d['checked'] == 1:
                     user_dict.extend(d['words'])

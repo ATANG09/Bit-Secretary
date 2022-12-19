@@ -173,26 +173,19 @@ class SmartReading(object):
 
     # 敏感词过滤
     def key_scanner(self, text, method, user):
-        # data = {'data_type': 'text', 'data_list': [text]}
-        # key_scanner_res = self.make_request(data, method)
-        # if not key_scanner_res:
-        #     return {'result': []}
+        data = {'data_type': 'text', 'data_list': [text]}
+        key_scanner_res = self.make_request(data, method)
+        if not key_scanner_res:
+            return {'result': []}
 
-        # if 'illegal' in key_scanner_res[0]:
-        #     res = key_scanner_res[0]['illegal']['keys']
-        # else:
-        #     res = []
-        # user_dict = self.user_dict_db._load_userdict(
-        #     dict_type='sensitive', user=user)  # 用户敏感词词典
-        # res.extend([w for w in user_dict if w in text])
-        # return {'result': res}
-
+        if 'illegal' in key_scanner_res[0]:
+            res = key_scanner_res[0]['illegal']['keys']
+        else:
+            res = []
         user_dict = self.user_dict_db._load_userdict(
             dict_type='sensitive', user=user)  # 用户敏感词词典
-        for w in user_dict:
-            sw, rw = w.split(' ')
-            text = text.replace(sw, rw)
-        return {'text':text}
+        res.extend([w for w in user_dict if w in text])
+        return {'result': res}
 
     # 摘要
     def summary(self, text, method):
@@ -208,6 +201,15 @@ class SmartReading(object):
     def lang_detect(self, text):
         index = self.dect.detect_text(text)
         return {'result': self.dect.id_to_chinese(index)}
+
+    # 脱敏
+    def desensity(self, text, user):
+        user_dict = self.user_dict_db._load_userdict(
+            dict_type='desensity', user=user)  # 用户脱敏词典
+        for w in user_dict:
+            sw, rw = w.split(' ')
+            text = text.replace(sw, rw)
+        return {'text':text}
 
     def smart_reading(self, text, method, user='_user'):
         if method == 'ictclas':
@@ -226,6 +228,8 @@ class SmartReading(object):
             res = self.summary(text, method)
         elif method == 'lang_detect':
             res = self.lang_detect(text)
+        elif method == 'desensity':
+            res = self.desensity(text, user)
         return json.dumps(res)
 
 
