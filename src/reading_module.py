@@ -173,19 +173,26 @@ class SmartReading(object):
 
     # 敏感词过滤
     def key_scanner(self, text, method, user):
-        data = {'data_type': 'text', 'data_list': [text]}
-        key_scanner_res = self.make_request(data, method)
-        if not key_scanner_res:
-            return {'result': []}
+        # data = {'data_type': 'text', 'data_list': [text]}
+        # key_scanner_res = self.make_request(data, method)
+        # if not key_scanner_res:
+        #     return {'result': []}
 
-        if 'illegal' in key_scanner_res[0]:
-            res = key_scanner_res[0]['illegal']['keys']
-        else:
-            res = []
+        # if 'illegal' in key_scanner_res[0]:
+        #     res = key_scanner_res[0]['illegal']['keys']
+        # else:
+        #     res = []
+        # user_dict = self.user_dict_db._load_userdict(
+        #     dict_type='sensitive', user=user)  # 用户敏感词词典
+        # res.extend([w for w in user_dict if w in text])
+        # return {'result': res}
+
         user_dict = self.user_dict_db._load_userdict(
             dict_type='sensitive', user=user)  # 用户敏感词词典
-        res.extend([w for w in user_dict if w in text])
-        return {'result': res}
+        for w in user_dict:
+            sw, rw = w.split(' ')
+            text = text.replace(sw, rw)
+        return {'text':text}
 
     # 摘要
     def summary(self, text, method):
