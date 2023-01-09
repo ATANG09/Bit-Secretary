@@ -190,7 +190,7 @@ class SmartReading(object):
     # 摘要
     def summary(self, text, method):
         data = {'data_type': 'text', 'data_list': [
-            text], 'param': {'max': 300, 'rate': 0.3}}
+            text], 'param': {'max': 1000, 'rate': 0.3}}
         summary_res = self.make_request(data, method)
         if not summary_res:
             return {'result': ''}

@@ -195,6 +195,8 @@ class UserDictDB(object):
             for path in paths:
                 data = open(path, 'r', encoding='utf-8').readlines()
                 data = [w.strip() for w in data if w.strip()]
+                if dict_type == 'desensity':
+                    data = [w for w in data if len(w.split(' ')) == 2]
                 words.extend(data)
             words = list(set(words))
             size = len(words)
